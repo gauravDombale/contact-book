@@ -8,7 +8,7 @@ The project is intentionally built as a practical full-stack application rather 
 
 - Add contacts with first name, last name, email, phone, company, address, and notes
 - Edit existing contact details
-- Search contacts by name, email, or phone number
+- Search contacts by name, email, or phone number (phone numbers are normalised on save, so `999-999-9999` and `9999999999` match the same record)
 - Delete contacts with a confirmation step
 - Merge duplicate contacts
 - Expose REST APIs with automatic Swagger documentation
@@ -114,6 +114,12 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+To enable verbose SQLAlchemy query logging during development, set the `APP_DEBUG` environment variable:
+
+```bash
+APP_DEBUG=true uvicorn app.main:app --reload
+```
+
 Backend URLs:
 
 ```text
@@ -149,7 +155,7 @@ cd backend
 pytest tests/ -v
 ```
 
-The backend tests cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, and validation for blank names.
+The backend tests (9 total) cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, validation for blank names, and rejection of whitespace-only first names.
 
 ## API Endpoints
 
