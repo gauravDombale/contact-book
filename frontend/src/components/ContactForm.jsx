@@ -13,6 +13,21 @@ const EMPTY = {
   notes: '',
 }
 
+function Field({ name, label, type = 'text', value, onChange }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-gray-500">{label}</label>
+      <input
+        name={name}
+        type={type}
+        value={value || ''}
+        onChange={onChange}
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      />
+    </div>
+  )
+}
+
 export default function ContactForm({ contact, onClose }) {
   const [form, setForm] = useState(contact ? { ...EMPTY, ...contact } : { ...EMPTY })
   const [saving, setSaving] = useState(false)
@@ -43,19 +58,6 @@ export default function ContactForm({ contact, onClose }) {
     }
   }
 
-  const Field = ({ name, label, type = 'text' }) => (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-gray-500">{label}</label>
-      <input
-        name={name}
-        type={type}
-        value={form[name] || ''}
-        onChange={handle}
-        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
-    </div>
-  )
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <form onSubmit={submit} className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
@@ -72,12 +74,12 @@ export default function ContactForm({ contact, onClose }) {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field name="first_name" label="First Name *" />
-          <Field name="last_name" label="Last Name" />
-          <Field name="email" label="Email" type="email" />
-          <Field name="phone" label="Phone" />
-          <Field name="company" label="Company" />
-          <Field name="address" label="Address" />
+          <Field name="first_name" label="First Name *" value={form.first_name} onChange={handle} />
+          <Field name="last_name" label="Last Name" value={form.last_name} onChange={handle} />
+          <Field name="email" label="Email" type="email" value={form.email} onChange={handle} />
+          <Field name="phone" label="Phone" value={form.phone} onChange={handle} />
+          <Field name="company" label="Company" value={form.company} onChange={handle} />
+          <Field name="address" label="Address" value={form.address} onChange={handle} />
         </div>
 
         <div className="mt-3">
