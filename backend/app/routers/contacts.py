@@ -30,6 +30,9 @@ async def search(q: str = Query(..., min_length=1), db: AsyncSession = Depends(g
 
 @router.post("/merge", response_model=ContactOut)
 async def merge(body: MergeRequest, db: AsyncSession = Depends(get_db)):
+    if body.source_id == body.target_id:
+        raise HTTPException(400, "source_id and target_id must be different")
+
     contact = await crud.merge_contacts(db, body)
     if not contact:
         raise HTTPException(404, "One or both contacts not found")

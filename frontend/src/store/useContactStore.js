@@ -39,8 +39,8 @@ const useContactStore = create((set, get) => ({
     await get().fetchContacts()
   },
 
-  mergeContacts: async (sourceId, targetId) => {
-    await api.mergeContacts({ source_id: sourceId, target_id: targetId })
+  mergeContacts: async (sourceId, targetId, overrides = null) => {
+    await api.mergeContacts({ source_id: sourceId, target_id: targetId, overrides })
     await get().fetchContacts()
   },
 }))

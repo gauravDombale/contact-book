@@ -13,14 +13,19 @@ const EMPTY = {
   notes: '',
 }
 
-// Matches the same RFC-5322 subset that Pydantic's EmailStr accepts
+// Quick client-side feedback; the backend remains the source of truth.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function Field({ name, label, type = 'text', value, onChange }) {
+  const id = `contact-${name}`
+
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-gray-500">{label}</label>
+      <label htmlFor={id} className="mb-1 block text-xs font-medium text-gray-500">
+        {label}
+      </label>
       <input
+        id={id}
         name={name}
         type={type}
         value={value || ''}
@@ -67,7 +72,7 @@ export default function ContactForm({ contact, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <form onSubmit={submit} className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+      <form onSubmit={submit} noValidate className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{contact ? 'Edit Contact' : 'New Contact'}</h2>
           <button
@@ -90,8 +95,11 @@ export default function ContactForm({ contact, onClose }) {
         </div>
 
         <div className="mt-3">
-          <label className="mb-1 block text-xs font-medium text-gray-500">Notes</label>
+          <label htmlFor="contact-notes" className="mb-1 block text-xs font-medium text-gray-500">
+            Notes
+          </label>
           <textarea
+            id="contact-notes"
             name="notes"
             value={form.notes || ''}
             onChange={handle}

@@ -1,11 +1,11 @@
 from typing import Optional
 import uuid
 
-from sqlalchemy import or_, select
+from sqlalchemy import false, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Contact
-from app.schemas import ContactCreate, ContactUpdate, MergeRequest
+from app.schemas import ContactCreate, ContactUpdate, MergeRequest, normalize_phone
 
 
 async def create_contact(db: AsyncSession, data: ContactCreate) -> Contact:
@@ -34,6 +34,8 @@ async def list_contacts(db: AsyncSession, skip: int = 0, limit: int = 100) -> li
 
 async def search_contacts(db: AsyncSession, q: str) -> list[Contact]:
     term = f"%{q}%"
+    phone_term = normalize_phone(q)
+    phone_filter = Contact.phone.ilike(f"%{phone_term}%") if phone_term else false()
     stmt = (
         select(Contact)
         .where(
@@ -41,6 +43,7 @@ async def search_contacts(db: AsyncSession, q: str) -> list[Contact]:
                 (Contact.first_name + " " + Contact.last_name).ilike(term),
                 Contact.email.ilike(term),
                 Contact.phone.ilike(term),
+                phone_filter,
             )
         )
         .order_by(Contact.first_name, Contact.last_name)

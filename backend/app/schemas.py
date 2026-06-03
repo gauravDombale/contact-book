@@ -45,12 +45,12 @@ class ContactBase(BaseModel):
     def normalize_last_name(cls, value: str) -> str:
         return value.strip()
 
-    @field_validator("email", "address", "company", "notes")
+    @field_validator("email", "address", "company", "notes", mode="before")
     @classmethod
     def normalize_optional_text(cls, value: Optional[str]) -> Optional[str]:
         return blank_to_none(value)
 
-    @field_validator("phone")
+    @field_validator("phone", mode="before")
     @classmethod
     def normalize_phone_field(cls, value: Optional[str]) -> Optional[str]:
         return normalize_phone(value)
@@ -78,12 +78,12 @@ class ContactUpdate(BaseModel):
             raise ValueError("first_name cannot be blank")
         return value.strip()
 
-    @field_validator("last_name", "email", "address", "company", "notes")
+    @field_validator("last_name", "email", "address", "company", "notes", mode="before")
     @classmethod
     def update_normalize_optional_text(cls, value: Optional[str]) -> Optional[str]:
         return blank_to_none(value)
 
-    @field_validator("phone")
+    @field_validator("phone", mode="before")
     @classmethod
     def update_normalize_phone(cls, value: Optional[str]) -> Optional[str]:
         return normalize_phone(value)

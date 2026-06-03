@@ -26,7 +26,7 @@ The project is intentionally built as a practical full-stack application rather 
 | Styling | Tailwind CSS v3 |
 | State Management | Zustand |
 | HTTP Client | Axios |
-| Testing | pytest, httpx AsyncClient |
+| Testing | pytest, httpx AsyncClient, Vitest, React Testing Library |
 | Deployment | Docker, Docker Compose, Nginx |
 
 ## Project Structure
@@ -58,6 +58,8 @@ contact-book/
 ├── docs/
 │   └── ARCHITECTURE.md
 ├── docker-compose.yml
+├── .env.example
+├── .github/workflows/ci.yml
 └── README.md
 ```
 
@@ -150,12 +152,35 @@ VITE_API_PROXY_TARGET=http://localhost:8010 npm run dev
 
 ## Running Tests
 
+Backend:
+
 ```bash
 cd backend
 pytest tests/ -v
 ```
 
-The backend tests (9 total) cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, validation for blank names, and rejection of whitespace-only first names.
+Frontend:
+
+```bash
+cd frontend
+npm test
+npm run build
+```
+
+The backend tests cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, merge overrides, invalid email rejection, phone normalization, blank optional field normalization, and blank first name rejection.
+
+The frontend tests cover form validation, successful form submission, loading skeletons, empty state behavior, API error display, and conflict-aware merge submission.
+
+## Continuous Integration
+
+The repository includes a GitHub Actions workflow at `.github/workflows/ci.yml`.
+
+On every push to `main` and every pull request, CI runs:
+
+- Backend dependency install and `pytest tests/ -v`
+- Frontend dependency install with `npm ci`
+- Frontend tests with `npm test`
+- Frontend production build with `npm run build`
 
 ## API Endpoints
 
@@ -182,6 +207,7 @@ The app uses a conservative merge strategy:
 - The selected source contact is deleted
 - Existing fields on the target contact are kept
 - Empty fields on the target are filled from the source contact
+- If both contacts have different values for the same field, the UI previews the conflict and lets the user choose the source value as an override
 
 This avoids accidentally overwriting useful information. In simple terms, the target contact wins, and the source contact only fills missing details.
 
