@@ -13,6 +13,9 @@ const EMPTY = {
   notes: '',
 }
 
+// Matches the same RFC-5322 subset that Pydantic's EmailStr accepts
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function Field({ name, label, type = 'text', value, onChange }) {
   return (
     <div>
@@ -40,6 +43,10 @@ export default function ContactForm({ contact, onClose }) {
     event.preventDefault()
     if (!form.first_name.trim()) {
       setError('First name is required')
+      return
+    }
+    if (form.email && !EMAIL_RE.test(form.email.trim())) {
+      setError('Please enter a valid email address')
       return
     }
 
