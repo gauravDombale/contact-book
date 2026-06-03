@@ -44,8 +44,9 @@ describe('MergeModal', () => {
     expect(screen.getByText('Amit Sharma will remain.')).toBeInTheDocument()
     expect(screen.getByText('Details that will be added')).toBeInTheDocument()
     expect(screen.getByText('source@example.com')).toBeInTheDocument()
-    expect(screen.getByText('Different details')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /review 1 different details/i })).toBeInTheDocument()
 
+    await userEvent.click(screen.getByRole('button', { name: /review 1 different details/i }))
     await userEvent.click(screen.getByLabelText(/use duplicate's phone/i))
     await userEvent.click(screen.getByRole('button', { name: /^merge$/i }))
 

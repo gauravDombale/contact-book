@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, GitMerge, Info, X } from 'lucide-react'
+import { CheckCircle2, ChevronDown, GitMerge, Info, X } from 'lucide-react'
 
 import useContactStore from '../store/useContactStore'
 
@@ -21,6 +21,7 @@ export default function MergeModal({ contact, onClose }) {
   const { contacts, mergeContacts } = useContactStore()
   const [targetId, setTargetId] = useState('')
   const [overrideFields, setOverrideFields] = useState({})
+  const [showDifferences, setShowDifferences] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -68,9 +69,9 @@ export default function MergeModal({ contact, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
             <GitMerge size={18} className="text-blue-600" />
             <h2 className="font-semibold">Merge Duplicate</h2>
@@ -85,113 +86,127 @@ export default function MergeModal({ contact, onClose }) {
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3 text-sm text-blue-900">
-          <p className="font-medium">Choose the contact you want to keep.</p>
-          <p className="mt-1 text-xs text-blue-700">
-            This duplicate will be removed: {fullName(contact)}.
-          </p>
-        </div>
+        <div className="overflow-y-auto px-6 py-4">
+          <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3 text-sm text-blue-900">
+            <p className="font-medium">Choose the contact you want to keep.</p>
+            <p className="mt-1 text-xs text-blue-700">
+              This duplicate will be removed: {fullName(contact)}.
+            </p>
+          </div>
 
-        <label htmlFor="merge-target" className="mb-1 block text-xs font-medium text-gray-500">
-          Contact to keep
-        </label>
-        <select
-          id="merge-target"
-          value={targetId}
-          onChange={(event) => {
-            setTargetId(event.target.value)
-            setOverrideFields({})
-          }}
-          disabled={!others.length}
-          className="mb-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
-        >
-          <option value="">
-            {others.length ? 'Select contact to keep' : 'No other contacts available'}
-          </option>
-          {others.map((candidate) => (
-            <option key={candidate.id} value={candidate.id}>
-              {fullName(candidate)} {candidate.phone ? `(${candidate.phone})` : ''}
+          <label htmlFor="merge-target" className="mb-1 block text-xs font-medium text-gray-500">
+            Contact to keep
+          </label>
+          <select
+            id="merge-target"
+            value={targetId}
+            onChange={(event) => {
+              setTargetId(event.target.value)
+              setOverrideFields({})
+              setShowDifferences(false)
+            }}
+            disabled={!others.length}
+            className="mb-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="">
+              {others.length ? 'Select contact to keep' : 'No other contacts available'}
             </option>
-          ))}
-        </select>
+            {others.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {fullName(candidate)} {candidate.phone ? `(${candidate.phone})` : ''}
+              </option>
+            ))}
+          </select>
 
-        {target && (
-          <div className="mb-4 rounded-lg border border-gray-200 p-3">
-            <div className="mb-3 flex items-start gap-2">
-              <Info size={16} className="mt-0.5 shrink-0 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {fullName(target)} will remain.
-                </p>
-                <p className="text-xs text-gray-500">
-                  Existing details on this contact will not be overwritten.
-                </p>
-              </div>
-            </div>
-
-            {additions.length ? (
-              <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Details that will be added
-                </p>
-                {additions.map((item) => (
-                  <div key={item.field} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500" />
-                    <p className="min-w-0">
-                      <span className="font-medium text-gray-700">{item.label}:</span>{' '}
-                      <span className="break-words text-gray-600">{item.value}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-gray-500">
-                There are no empty fields to fill automatically.
-              </p>
-            )}
-
-            {conflicts.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Different details
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  The kept contact wins by default. Select any duplicate details you want to use instead.
-                </p>
-                <div className="mt-3 space-y-2">
-                  {conflicts.map((item) => (
-                    <label
-                      key={item.field}
-                      className="flex items-start gap-2 rounded-lg border border-gray-100 p-2 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={Boolean(overrideFields[item.field])}
-                        onChange={() => toggleOverride(item.field)}
-                        className="mt-1 h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="min-w-0">
-                        <span className="block font-medium text-gray-700">
-                          Use duplicate&apos;s {item.label.toLowerCase()}
-                        </span>
-                        <span className="block break-words text-xs text-gray-500">
-                          Current: {item.targetValue}
-                        </span>
-                        <span className="block break-words text-xs text-gray-500">
-                          Duplicate: {item.sourceValue}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
+          {target && (
+            <div className="rounded-lg border border-gray-200 p-3">
+              <div className="mb-3 flex items-start gap-2">
+                <Info size={16} className="mt-0.5 shrink-0 text-gray-400" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {fullName(target)} will remain.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Existing details on this contact will not be overwritten unless you choose it below.
+                  </p>
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {error && <p className="mb-3 text-xs text-red-600">{error}</p>}
+              {additions.length ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Details that will be added
+                  </p>
+                  {additions.map((item) => (
+                    <div key={item.field} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500" />
+                      <p className="min-w-0">
+                        <span className="font-medium text-gray-700">{item.label}:</span>{' '}
+                        <span className="break-words text-gray-600">{item.value}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">
+                  There are no empty fields to fill automatically.
+                </p>
+              )}
 
-        <div className="flex justify-end gap-2">
+              {conflicts.length > 0 && (
+                <div className="mt-4 border-t border-gray-100 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDifferences((value) => !value)}
+                    className="flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  >
+                    <span>Review {conflicts.length} different details</span>
+                    <ChevronDown
+                      size={16}
+                      className={`transition ${showDifferences ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {showDifferences && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-gray-500">
+                        The kept contact wins by default. Select only the duplicate details you want to use instead.
+                      </p>
+                      {conflicts.map((item) => (
+                        <label
+                          key={item.field}
+                          className="flex items-start gap-2 rounded-lg border border-gray-100 p-2 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(overrideFields[item.field])}
+                            onChange={() => toggleOverride(item.field)}
+                            className="mt-1 h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="min-w-0">
+                            <span className="block font-medium text-gray-700">
+                              Use duplicate&apos;s {item.label.toLowerCase()}
+                            </span>
+                            <span className="block break-words text-xs text-gray-500">
+                              Current: {item.targetValue}
+                            </span>
+                            <span className="block break-words text-xs text-gray-500">
+                              Duplicate: {item.sourceValue}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
