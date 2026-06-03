@@ -28,6 +28,8 @@ function Field({ name, label, type = 'text', value, onChange }) {
         id={id}
         name={name}
         type={type}
+        inputMode={name === 'phone' ? 'numeric' : undefined}
+        pattern={name === 'phone' ? '[0-9]*' : undefined}
         value={value || ''}
         onChange={onChange}
         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -42,7 +44,10 @@ export default function ContactForm({ contact, onClose }) {
   const [error, setError] = useState('')
   const { createContact, updateContact } = useContactStore()
 
-  const handle = (event) => setForm({ ...form, [event.target.name]: event.target.value })
+  const handle = (event) => {
+    const { name, value } = event.target
+    setForm({ ...form, [name]: name === 'phone' ? value.replace(/\D/g, '') : value })
+  }
 
   const submit = async (event) => {
     event.preventDefault()
@@ -52,6 +57,10 @@ export default function ContactForm({ contact, onClose }) {
     }
     if (form.email && !EMAIL_RE.test(form.email.trim())) {
       setError('Please enter a valid email address')
+      return
+    }
+    if (!form.phone.trim()) {
+      setError('Phone number is required')
       return
     }
 
@@ -89,7 +98,7 @@ export default function ContactForm({ contact, onClose }) {
           <Field name="first_name" label="First Name *" value={form.first_name} onChange={handle} />
           <Field name="last_name" label="Last Name" value={form.last_name} onChange={handle} />
           <Field name="email" label="Email" type="email" value={form.email} onChange={handle} />
-          <Field name="phone" label="Phone" value={form.phone} onChange={handle} />
+          <Field name="phone" label="Phone *" type="tel" value={form.phone} onChange={handle} />
           <Field name="company" label="Company" value={form.company} onChange={handle} />
           <Field name="address" label="Address" value={form.address} onChange={handle} />
         </div>

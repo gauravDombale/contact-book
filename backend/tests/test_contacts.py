@@ -23,7 +23,22 @@ async def test_create_contact(client):
 async def test_invalid_email_rejected(client):
     response = await client.post(
         BASE + "/",
-        json={"first_name": "Alice", "email": "not-an-email"},
+        json={"first_name": "Alice", "email": "not-an-email", "phone": "9999999999"},
+    )
+
+    assert response.status_code == 422
+
+
+async def test_phone_is_required(client):
+    response = await client.post(BASE + "/", json={"first_name": "Alice"})
+
+    assert response.status_code == 422
+
+
+async def test_phone_rejects_alphabets(client):
+    response = await client.post(
+        BASE + "/",
+        json={"first_name": "Alice", "phone": "999abc9999"},
     )
 
     assert response.status_code == 422
@@ -42,17 +57,17 @@ async def test_phone_is_normalized(client):
 async def test_blank_optional_fields_become_null(client):
     response = await client.post(
         BASE + "/",
-        json={"first_name": "Nora", "email": "", "phone": "   ", "company": "   "},
+        json={"first_name": "Nora", "email": "", "phone": "5555555555", "company": "   "},
     )
 
     assert response.status_code == 201
     assert response.json()["email"] is None
-    assert response.json()["phone"] is None
+    assert response.json()["phone"] == "5555555555"
     assert response.json()["company"] is None
 
 
 async def test_list_contacts(client):
-    await client.post(BASE + "/", json={"first_name": "Bob"})
+    await client.post(BASE + "/", json={"first_name": "Bob", "phone": "1111111111"})
     response = await client.get(BASE + "/")
 
     assert response.status_code == 200
@@ -60,7 +75,10 @@ async def test_list_contacts(client):
 
 
 async def test_search_by_name(client):
-    await client.post(BASE + "/", json={"first_name": "Charlie", "last_name": "Brown"})
+    await client.post(
+        BASE + "/",
+        json={"first_name": "Charlie", "last_name": "Brown", "phone": "2222222222"},
+    )
     response = await client.get(BASE + "/search?q=charlie")
 
     assert response.status_code == 200
@@ -68,7 +86,10 @@ async def test_search_by_name(client):
 
 
 async def test_search_by_email(client):
-    await client.post(BASE + "/", json={"first_name": "Diana", "email": "diana@test.com"})
+    await client.post(
+        BASE + "/",
+        json={"first_name": "Diana", "email": "diana@test.com", "phone": "3333333333"},
+    )
     response = await client.get(BASE + "/search?q=diana@test.com")
 
     assert response.status_code == 200
@@ -92,7 +113,7 @@ async def test_search_by_formatted_phone(client):
 
 
 async def test_update_contact(client):
-    response = await client.post(BASE + "/", json={"first_name": "Frank"})
+    response = await client.post(BASE + "/", json={"first_name": "Frank", "phone": "4444444444"})
     contact_id = response.json()["id"]
     updated = await client.put(BASE + f"/{contact_id}", json={"first_name": "Franklin"})
 
@@ -101,7 +122,7 @@ async def test_update_contact(client):
 
 
 async def test_delete_contact(client):
-    response = await client.post(BASE + "/", json={"first_name": "Grace"})
+    response = await client.post(BASE + "/", json={"first_name": "Grace", "phone": "5555555555"})
     contact_id = response.json()["id"]
     deleted = await client.delete(BASE + f"/{contact_id}")
     fetched = await client.get(BASE + f"/{contact_id}")
@@ -111,7 +132,10 @@ async def test_delete_contact(client):
 
 
 async def test_merge_contacts(client):
-    source = await client.post(BASE + "/", json={"first_name": "Hal", "email": "hal@x.com"})
+    source = await client.post(
+        BASE + "/",
+        json={"first_name": "Hal", "email": "hal@x.com", "phone": "6666666666"},
+    )
     target = await client.post(BASE + "/", json={"first_name": "Hal", "phone": "7777777777"})
     source_id = source.json()["id"]
     target_id = target.json()["id"]
@@ -129,7 +153,7 @@ async def test_merge_contacts(client):
 
 
 async def test_merge_rejects_same_source_and_target(client):
-    response = await client.post(BASE + "/", json={"first_name": "June"})
+    response = await client.post(BASE + "/", json={"first_name": "June", "phone": "8888888888"})
     contact_id = response.json()["id"]
 
     merged = await client.post(

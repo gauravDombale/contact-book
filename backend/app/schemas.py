@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Any
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
@@ -24,11 +25,27 @@ def normalize_phone(value: Optional[str]) -> Optional[str]:
     return digits or None
 
 
+def normalize_required_phone(value: Any) -> str:
+    if value is None:
+        raise ValueError("phone is required")
+
+    raw = str(value).strip()
+    if not raw:
+        raise ValueError("phone is required")
+    if re.search(r"[A-Za-z]", raw):
+        raise ValueError("phone can contain only numbers and common phone separators")
+
+    digits = normalize_phone(raw)
+    if not digits:
+        raise ValueError("phone is required")
+    return digits
+
+
 class ContactBase(BaseModel):
     first_name: str
     last_name: str = ""
     email: Optional[EmailStr] = None
-    phone: Optional[str] = None
+    phone: str
     address: Optional[str] = None
     company: Optional[str] = None
     notes: Optional[str] = None
@@ -52,8 +69,8 @@ class ContactBase(BaseModel):
 
     @field_validator("phone", mode="before")
     @classmethod
-    def normalize_phone_field(cls, value: Optional[str]) -> Optional[str]:
-        return normalize_phone(value)
+    def normalize_phone_field(cls, value: Any) -> str:
+        return normalize_required_phone(value)
 
 
 class ContactCreate(ContactBase):
@@ -85,8 +102,8 @@ class ContactUpdate(BaseModel):
 
     @field_validator("phone", mode="before")
     @classmethod
-    def update_normalize_phone(cls, value: Optional[str]) -> Optional[str]:
-        return normalize_phone(value)
+    def update_normalize_phone(cls, value: Any) -> str:
+        return normalize_required_phone(value)
 
 
 class ContactOut(ContactBase):

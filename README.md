@@ -6,7 +6,7 @@ The project is intentionally built as a practical full-stack application rather 
 
 ## What the Application Does
 
-- Add contacts with first name, last name, email, phone, company, address, and notes
+- Add contacts with first name, required phone number, optional email, company, address, and notes
 - Edit existing contact details
 - Search contacts by name, email, or phone number (phone numbers are normalised on save, so `999-999-9999` and `9999999999` match the same record)
 - Delete contacts with a confirmation step
@@ -167,9 +167,9 @@ npm test
 npm run build
 ```
 
-The backend tests cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, merge overrides, invalid email rejection, phone normalization, blank optional field normalization, and blank first name rejection.
+The backend tests cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, merge overrides, invalid email rejection, required phone validation, alphabetic phone rejection, phone normalization, blank optional field normalization, and blank first name rejection.
 
-The frontend tests cover form validation, successful form submission, loading skeletons, empty state behavior, API error display, and conflict-aware merge submission.
+The frontend tests cover form validation, required phone behavior, phone digit filtering, successful form submission, loading skeletons, empty state behavior, API error display, and conflict-aware merge submission.
 
 ## Continuous Integration
 
