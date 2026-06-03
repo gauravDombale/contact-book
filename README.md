@@ -207,6 +207,7 @@ The app uses a conservative merge strategy:
 - The selected source contact is deleted
 - Existing fields on the target contact are kept
 - Empty fields on the target are filled from the source contact
+- If both contacts have different values, the user can choose specific duplicate details to use as overrides
 
 This avoids accidentally overwriting useful information. In simple terms, the target contact wins, and the source contact only fills missing details.
 

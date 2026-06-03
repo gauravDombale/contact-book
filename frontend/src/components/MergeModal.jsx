@@ -4,6 +4,8 @@ import { CheckCircle2, GitMerge, Info, X } from 'lucide-react'
 import useContactStore from '../store/useContactStore'
 
 const MERGE_FIELDS = [
+  ['first_name', 'First name'],
+  ['last_name', 'Last name'],
   ['email', 'Email'],
   ['phone', 'Phone'],
   ['company', 'Company'],
@@ -18,6 +20,7 @@ function fullName(contact) {
 export default function MergeModal({ contact, onClose }) {
   const { contacts, mergeContacts } = useContactStore()
   const [targetId, setTargetId] = useState('')
+  const [overrideFields, setOverrideFields] = useState({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -30,13 +33,32 @@ export default function MergeModal({ contact, onClose }) {
         value: contact[field],
       }))
     : []
+  const conflicts = target
+    ? MERGE_FIELDS.filter(
+        ([field]) => target[field] && contact[field] && target[field] !== contact[field],
+      ).map(([field, label]) => ({
+        field,
+        label,
+        sourceValue: contact[field],
+        targetValue: target[field],
+      }))
+    : []
+
+  const toggleOverride = (field) => {
+    setOverrideFields((current) => ({ ...current, [field]: !current[field] }))
+  }
 
   const doMerge = async () => {
     if (!targetId) return
     setSaving(true)
     setError('')
     try {
-      await mergeContacts(contact.id, targetId)
+      const overrides = Object.fromEntries(
+        conflicts
+          .filter((item) => overrideFields[item.field])
+          .map((item) => [item.field, item.sourceValue]),
+      )
+      await mergeContacts(contact.id, targetId, Object.keys(overrides).length ? overrides : null)
       onClose()
     } catch (err) {
       setError(err.response?.data?.detail || 'Merge failed')
@@ -76,7 +98,10 @@ export default function MergeModal({ contact, onClose }) {
         <select
           id="merge-target"
           value={targetId}
-          onChange={(event) => setTargetId(event.target.value)}
+          onChange={(event) => {
+            setTargetId(event.target.value)
+            setOverrideFields({})
+          }}
           disabled={!others.length}
           className="mb-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
         >
@@ -121,8 +146,45 @@ export default function MergeModal({ contact, onClose }) {
               </div>
             ) : (
               <p className="text-xs text-gray-500">
-                No empty fields will be filled. The duplicate contact will simply be removed.
+                There are no empty fields to fill automatically.
               </p>
+            )}
+
+            {conflicts.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Different details
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  The kept contact wins by default. Select any duplicate details you want to use instead.
+                </p>
+                <div className="mt-3 space-y-2">
+                  {conflicts.map((item) => (
+                    <label
+                      key={item.field}
+                      className="flex items-start gap-2 rounded-lg border border-gray-100 p-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(overrideFields[item.field])}
+                        onChange={() => toggleOverride(item.field)}
+                        className="mt-1 h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-medium text-gray-700">
+                          Use duplicate&apos;s {item.label.toLowerCase()}
+                        </span>
+                        <span className="block break-words text-xs text-gray-500">
+                          Current: {item.targetValue}
+                        </span>
+                        <span className="block break-words text-xs text-gray-500">
+                          Duplicate: {item.sourceValue}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}

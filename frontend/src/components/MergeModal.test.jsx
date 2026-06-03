@@ -35,7 +35,7 @@ describe('MergeModal', () => {
     })
   })
 
-  it('summarizes the simple merge and keeps the selected target contact', async () => {
+  it('summarizes automatic additions and submits selected source overrides', async () => {
     const onClose = vi.fn()
     render(<MergeModal contact={source} onClose={onClose} />)
 
@@ -44,13 +44,16 @@ describe('MergeModal', () => {
     expect(screen.getByText('Amit Sharma will remain.')).toBeInTheDocument()
     expect(screen.getByText('Details that will be added')).toBeInTheDocument()
     expect(screen.getByText('source@example.com')).toBeInTheDocument()
+    expect(screen.getByText('Different details')).toBeInTheDocument()
 
+    await userEvent.click(screen.getByLabelText(/use duplicate's phone/i))
     await userEvent.click(screen.getByRole('button', { name: /^merge$/i }))
 
     await waitFor(() => {
       expect(useContactStore.getState().mergeContacts).toHaveBeenCalledWith(
         source.id,
         target.id,
+        { phone: source.phone },
       )
     })
     expect(onClose).toHaveBeenCalled()
