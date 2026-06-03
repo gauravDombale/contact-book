@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./contacts.db"
     APP_NAME: str = "ContactBook API"
-    DEBUG: bool = Field(default=True, validation_alias="APP_DEBUG")
+    DEBUG: bool = Field(default=False, validation_alias="APP_DEBUG")
 
 
 settings = Settings()
