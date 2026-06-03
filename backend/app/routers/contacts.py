@@ -28,6 +28,14 @@ async def search(q: str = Query(..., min_length=1), db: AsyncSession = Depends(g
     return await crud.search_contacts(db, q)
 
 
+@router.post("/merge", response_model=ContactOut)
+async def merge(body: MergeRequest, db: AsyncSession = Depends(get_db)):
+    contact = await crud.merge_contacts(db, body)
+    if not contact:
+        raise HTTPException(404, "One or both contacts not found")
+    return contact
+
+
 @router.get("/{contact_id}", response_model=ContactOut)
 async def get_one(contact_id: str, db: AsyncSession = Depends(get_db)):
     contact = await crud.get_contact(db, contact_id)
@@ -51,11 +59,3 @@ async def delete(contact_id: str, db: AsyncSession = Depends(get_db)):
     ok = await crud.delete_contact(db, contact_id)
     if not ok:
         raise HTTPException(404, "Contact not found")
-
-
-@router.post("/merge", response_model=ContactOut)
-async def merge(body: MergeRequest, db: AsyncSession = Depends(get_db)):
-    contact = await crud.merge_contacts(db, body)
-    if not contact:
-        raise HTTPException(404, "One or both contacts not found")
-    return contact
