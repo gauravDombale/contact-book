@@ -9,6 +9,7 @@ const useContactStore = create((set, get) => ({
   query: '',
 
   setQuery: (query) => set({ query }),
+  clearError: () => set({ error: null }),
 
   fetchContacts: async () => {
     set({ loading: true })

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookUser, Plus, Users } from 'lucide-react'
+import { AlertCircle, BookUser, Plus, Users, X } from 'lucide-react'
 
 import ContactForm from '../components/ContactForm'
 import ContactList from '../components/ContactList'
@@ -7,7 +7,7 @@ import SearchBar from '../components/SearchBar'
 import useContactStore from '../store/useContactStore'
 
 export default function Home() {
-  const { fetchContacts, contacts } = useContactStore()
+  const { fetchContacts, contacts, error, clearError } = useContactStore()
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
@@ -33,6 +33,21 @@ export default function Home() {
         </div>
       </header>
 
+      {error && (
+        <div role="alert" className="mx-auto mt-3 flex max-w-5xl items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button
+            type="button"
+            onClick={clearError}
+            aria-label="Dismiss error"
+            className="ml-2 text-red-400 hover:text-red-600"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <main className="mx-auto max-w-5xl px-4 py-6">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar />
@@ -41,7 +56,7 @@ export default function Home() {
             {contacts.length} contacts
           </span>
         </div>
-        <ContactList />
+        <ContactList onAdd={() => setAdding(true)} />
       </main>
 
       {adding && <ContactForm onClose={() => setAdding(false)} />}
