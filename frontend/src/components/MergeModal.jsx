@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { ArrowRight, GitMerge, X } from 'lucide-react'
+import { CheckCircle2, GitMerge, Info, X } from 'lucide-react'
 
 import useContactStore from '../store/useContactStore'
 
 const MERGE_FIELDS = [
-  ['first_name', 'First name'],
-  ['last_name', 'Last name'],
   ['email', 'Email'],
   ['phone', 'Phone'],
   ['company', 'Company'],
@@ -13,47 +11,32 @@ const MERGE_FIELDS = [
   ['notes', 'Notes'],
 ]
 
-function display(value) {
-  return value || 'Empty'
+function fullName(contact) {
+  return [contact.first_name, contact.last_name].filter(Boolean).join(' ')
 }
 
 export default function MergeModal({ contact, onClose }) {
   const { contacts, mergeContacts } = useContactStore()
   const [targetId, setTargetId] = useState('')
-  const [overrideFields, setOverrideFields] = useState({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const others = contacts.filter((candidate) => candidate.id !== contact.id)
   const target = contacts.find((candidate) => candidate.id === targetId)
-
-  const previewRows = target
-    ? MERGE_FIELDS.map(([field, label]) => {
-        const sourceValue = contact[field]
-        const targetValue = target[field]
-        const hasConflict = Boolean(sourceValue && targetValue && sourceValue !== targetValue)
-        const useSource = Boolean(overrideFields[field])
-        const finalValue = useSource || (!targetValue && sourceValue) ? sourceValue : targetValue
-
-        return { field, label, sourceValue, targetValue, finalValue, hasConflict, useSource }
-      })
+  const additions = target
+    ? MERGE_FIELDS.filter(([field]) => !target[field] && contact[field]).map(([field, label]) => ({
+        field,
+        label,
+        value: contact[field],
+      }))
     : []
-
-  const toggleOverride = (field) => {
-    setOverrideFields((current) => ({ ...current, [field]: !current[field] }))
-  }
 
   const doMerge = async () => {
     if (!targetId) return
     setSaving(true)
     setError('')
     try {
-      const overrides = Object.fromEntries(
-        previewRows
-          .filter((row) => row.useSource)
-          .map((row) => [row.field, row.sourceValue]),
-      )
-      await mergeContacts(contact.id, targetId, Object.keys(overrides).length ? overrides : null)
+      await mergeContacts(contact.id, targetId)
       onClose()
     } catch (err) {
       setError(err.response?.data?.detail || 'Merge failed')
@@ -64,11 +47,11 @@ export default function MergeModal({ contact, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <GitMerge size={18} className="text-blue-600" />
-            <h2 className="font-semibold">Merge Contact</h2>
+            <h2 className="font-semibold">Merge Duplicate</h2>
           </div>
           <button
             type="button"
@@ -80,86 +63,69 @@ export default function MergeModal({ contact, onClose }) {
           </button>
         </div>
 
-        <p className="mb-3 text-sm text-gray-500">
-          Merge duplicate source contact{' '}
-          <span className="font-medium text-gray-900">
-            {contact.first_name} {contact.last_name}
-          </span>{' '}
-          into the target contact that should remain.
-        </p>
+        <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3 text-sm text-blue-900">
+          <p className="font-medium">Choose the contact you want to keep.</p>
+          <p className="mt-1 text-xs text-blue-700">
+            This duplicate will be removed: {fullName(contact)}.
+          </p>
+        </div>
 
+        <label htmlFor="merge-target" className="mb-1 block text-xs font-medium text-gray-500">
+          Contact to keep
+        </label>
         <select
+          id="merge-target"
           value={targetId}
-          onChange={(event) => {
-            setTargetId(event.target.value)
-            setOverrideFields({})
-          }}
+          onChange={(event) => setTargetId(event.target.value)}
           disabled={!others.length}
           className="mb-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
         >
           <option value="">
-            {others.length ? 'Select target contact' : 'No other contacts available'}
+            {others.length ? 'Select contact to keep' : 'No other contacts available'}
           </option>
           {others.map((candidate) => (
             <option key={candidate.id} value={candidate.id}>
-              {candidate.first_name} {candidate.last_name}{' '}
-              {candidate.email ? `(${candidate.email})` : ''}
+              {fullName(candidate)} {candidate.phone ? `(${candidate.phone})` : ''}
             </option>
           ))}
         </select>
 
         {target && (
-          <div className="mb-4 overflow-hidden rounded-lg border border-gray-200">
-            <div className="grid grid-cols-[1fr_1fr_1fr] gap-0 border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-              <span>Source</span>
-              <span>Target</span>
-              <span>Final</span>
+          <div className="mb-4 rounded-lg border border-gray-200 p-3">
+            <div className="mb-3 flex items-start gap-2">
+              <Info size={16} className="mt-0.5 shrink-0 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  {fullName(target)} will remain.
+                </p>
+                <p className="text-xs text-gray-500">
+                  Existing details on this contact will not be overwritten.
+                </p>
+              </div>
             </div>
-            <div className="divide-y divide-gray-100">
-              {previewRows.map((row) => (
-                <div key={row.field} className="grid grid-cols-[1fr_1fr_1fr] gap-0 px-3 py-3 text-xs">
-                  <div className="min-w-0 pr-3">
-                    <p className="mb-1 font-medium text-gray-500">{row.label}</p>
-                    <p className={row.sourceValue ? 'break-words text-gray-800' : 'text-gray-400'}>
-                      {display(row.sourceValue)}
+
+            {additions.length ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Details that will be added
+                </p>
+                {additions.map((item) => (
+                  <div key={item.field} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500" />
+                    <p className="min-w-0">
+                      <span className="font-medium text-gray-700">{item.label}:</span>{' '}
+                      <span className="break-words text-gray-600">{item.value}</span>
                     </p>
                   </div>
-                  <div className="min-w-0 border-l border-gray-100 px-3">
-                    <p className="mb-1 font-medium text-gray-500">{row.label}</p>
-                    <p className={row.targetValue ? 'break-words text-gray-800' : 'text-gray-400'}>
-                      {display(row.targetValue)}
-                    </p>
-                  </div>
-                  <div className="min-w-0 border-l border-gray-100 pl-3">
-                    <div className="mb-1 flex items-center gap-1 font-medium text-gray-500">
-                      <ArrowRight size={12} />
-                      <span>{row.label}</span>
-                    </div>
-                    <p className={row.finalValue ? 'break-words text-gray-900' : 'text-gray-400'}>
-                      {display(row.finalValue)}
-                    </p>
-                    {row.hasConflict && (
-                      <label className="mt-2 flex items-center gap-2 text-[11px] text-blue-700">
-                        <input
-                          type="checkbox"
-                          checked={row.useSource}
-                          onChange={() => toggleOverride(row.field)}
-                          className="h-3 w-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        Use source value
-                      </label>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">
+                No empty fields will be filled. The duplicate contact will simply be removed.
+              </p>
+            )}
           </div>
         )}
-
-        <p className="mb-4 text-xs text-gray-400">
-          The source contact will be deleted after merge. Target values are kept unless the
-          target field is empty or you choose a source value for a conflict.
-        </p>
 
         {error && <p className="mb-3 text-xs text-red-600">{error}</p>}
 

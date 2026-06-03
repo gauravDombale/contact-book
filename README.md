@@ -169,7 +169,7 @@ npm run build
 
 The backend tests cover contact creation, listing, search by name/email/phone, update, delete, merge behavior, merge overrides, invalid email rejection, required phone validation, alphabetic phone rejection, phone normalization, blank optional field normalization, and blank first name rejection.
 
-The frontend tests cover form validation, required phone behavior, phone digit filtering, successful form submission, loading skeletons, empty state behavior, API error display, and conflict-aware merge submission.
+The frontend tests cover form validation, required phone behavior, phone digit filtering, successful form submission, loading skeletons, empty state behavior, API error display, and the simplified merge flow.
 
 ## Continuous Integration
 
@@ -207,7 +207,6 @@ The app uses a conservative merge strategy:
 - The selected source contact is deleted
 - Existing fields on the target contact are kept
 - Empty fields on the target are filled from the source contact
-- If both contacts have different values for the same field, the UI previews the conflict and lets the user choose the source value as an override
 
 This avoids accidentally overwriting useful information. In simple terms, the target contact wins, and the source contact only fills missing details.
 

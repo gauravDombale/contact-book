@@ -20,7 +20,7 @@ const target = {
   id: 'target-1',
   first_name: 'Amit',
   last_name: 'Sharma',
-  email: 'target@example.com',
+  email: '',
   phone: '222',
   company: '',
   address: '',
@@ -35,23 +35,22 @@ describe('MergeModal', () => {
     })
   })
 
-  it('previews merge conflicts and submits selected overrides', async () => {
+  it('summarizes the simple merge and keeps the selected target contact', async () => {
     const onClose = vi.fn()
     render(<MergeModal contact={source} onClose={onClose} />)
 
     await userEvent.selectOptions(screen.getByRole('combobox'), target.id)
 
+    expect(screen.getByText('Amit Sharma will remain.')).toBeInTheDocument()
+    expect(screen.getByText('Details that will be added')).toBeInTheDocument()
     expect(screen.getByText('source@example.com')).toBeInTheDocument()
-    expect(screen.getAllByText('target@example.com').length).toBeGreaterThan(0)
 
-    await userEvent.click(screen.getAllByLabelText(/use source value/i)[0])
     await userEvent.click(screen.getByRole('button', { name: /^merge$/i }))
 
     await waitFor(() => {
       expect(useContactStore.getState().mergeContacts).toHaveBeenCalledWith(
         source.id,
         target.id,
-        { email: source.email },
       )
     })
     expect(onClose).toHaveBeenCalled()
